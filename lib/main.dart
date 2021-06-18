@@ -1,11 +1,10 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:du21_random_wheel/constants.dart';
 import 'package:du21_random_wheel/member_filter.dart';
 import 'package:du21_random_wheel/member_page.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
-
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -43,59 +42,70 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     selected.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    _getMembers();
+    setState(() {
+      _getMembers();
+    });
     return Scaffold(
-
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: listMembers.length < 1 ? Container() :  GestureDetector(
-        onTap: () {
-          setState(() {
-            selected.add(Random().nextInt(listMembers.length));
-          });
-        },
-        child: Column(
-          children: [
-            Expanded(
-                child: FortuneWheel(
-                  selected: selected.stream,
-                  items: [
-                    for(var it in listMembers) FortuneItem(
-                        child: Text(it.name)
-                    )
-                  ],
-                )
-            )
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton (
+      body: listMembers.length <= 1
+          ? Container()
+          : GestureDetector(
+              onTap: () {
+                setState(() {
+                  selected.add(Random().nextInt(listMembers.length));
+                });
+              },
+              child: Column(
+                children: [
+                  Expanded(
+                      child: FortuneWheel(
+                    selected: selected.stream,
+                    physics: CircularPanPhysics(
+                      duration: Duration(seconds: 1),
+                      curve: Curves.decelerate,
+                    ),
+                    items: [
+                      for (var it in listMembers)
+                        if(it.isSelected)
+                        FortuneItem(
+                          child: Text(it.name),
+                        )
+                    ],
+                    animateFirst: false,
+                        onAnimationEnd: () {
+                          print('end end end');
+                    },
+                  ))
+                ],
+              ),
+            ),
+      floatingActionButton: FloatingActionButton(
         onPressed: _memberPage,
         tooltip: 'Add member',
         child: Icon(Icons.add),
-      ),// This trailing comma makes auto-formatting nicer for build methods.
+      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 
   void _memberPage() {
-      Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MemberPage(listMembers))
-      );
+    Navigator.of(context)
+        .push(new MaterialPageRoute<String>(
+            builder: (context) => MemberPage(listMembers)))
+        .then((value) => setState(() => {_getMembers()}));
   }
 
   _getMembers() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? members = prefs.getString(MEMBERS);
-    if(members != null && members.isNotEmpty) {
+    if (members != null && members.isNotEmpty) {
       this.listMembers = MemberFilter.decode(members);
     }
   }

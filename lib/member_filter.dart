@@ -1,20 +1,23 @@
 import 'dart:convert';
 
 class MemberFilter {
+  final String id;
   final String name;
   final bool isSelected;
 
 
-  MemberFilter({required this.name, required this.isSelected});
+  MemberFilter({required this.name, required this.isSelected, required this.id});
 
   factory MemberFilter.fromJson(Map<String, dynamic> jsonData) {
     return MemberFilter(
+      id: jsonData['id'],
       name: jsonData['name'],
       isSelected: jsonData['isSelected']
     );
   }
 
   static Map<String, dynamic> toMap(MemberFilter member) => {
+    'id' : member.id,
     'name': member.name,
     'isSelected': member.isSelected
   };
